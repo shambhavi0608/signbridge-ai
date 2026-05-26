@@ -1,6 +1,6 @@
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { AppCard as Card } from "@/components/ui/AppCard";
+import { AppBadge as Badge } from "@/components/ui/AppBadge";
+import { AppButton as Button } from "@/components/ui/AppButton";
 import { Copy, Play, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { TranslationRecord } from "@/lib/firestoreHelpers";

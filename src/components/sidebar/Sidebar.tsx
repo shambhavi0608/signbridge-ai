@@ -6,7 +6,7 @@ import {
   Play, LogOut, Hand,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
+import { AppButton as Button } from "@/components/ui/AppButton";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 const links = [

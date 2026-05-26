@@ -1,5 +1,5 @@
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { AppCard as Card } from "@/components/ui/AppCard";
+import { AppButton as Button } from "@/components/ui/AppButton";
 import { Volume2, X, MessageSquare } from "lucide-react";
 
 interface Props {

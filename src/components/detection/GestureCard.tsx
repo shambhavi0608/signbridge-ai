@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui/Card";
+import { AppCard as Card } from "@/components/ui/AppCard";
 import { Hand } from "lucide-react";
 import { motion } from "framer-motion";
 

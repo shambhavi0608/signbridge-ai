@@ -1,7 +1,7 @@
 import { Camera, CameraOff, Video } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { AppButton as Button } from "@/components/ui/AppButton";
+import { AppCard as Card } from "@/components/ui/AppCard";
+import { AppBadge as Badge } from "@/components/ui/AppBadge";
 import type { RefObject } from "react";
 
 interface Props {
