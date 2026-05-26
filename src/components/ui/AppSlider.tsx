@@ -14,7 +14,7 @@ interface Props {
   className?: string;
 }
 
-export function Slider({
+export function AppSlider({
   label, min = 0, max = 100, step = 1, value, defaultValue = 50, storageKey,
   format, onChange, className,
 }: Props) {
