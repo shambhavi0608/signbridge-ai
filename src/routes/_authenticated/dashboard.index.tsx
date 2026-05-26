@@ -29,7 +29,12 @@ function LiveTranslator() {
   const [sentence, setSentence] = useState("");
   const [gesture, setGesture] = useState<string | null>(null);
   const [emotion, setEmotion] = useState<string | null>(null);
-  const [lang, setLang] = useState<Lang>(() => (localStorage.getItem("signbridge:lang") as Lang) || "en");
+  const [lang, setLang] = useState<Lang>("en");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem("signbridge:lang") as Lang | null;
+    if (stored) setLang(stored);
+  }, []);
   const [speaking, setSpeaking] = useState(false);
   const [sessionStart, setSessionStart] = useState<number | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -49,7 +54,7 @@ function LiveTranslator() {
     if (!state.active) { setSessionStart(null); setElapsed(0); }
   }, [state.active]);
 
-  useEffect(() => { localStorage.setItem("signbridge:lang", lang); }, [lang]);
+  useEffect(() => { if (typeof window !== "undefined") window.localStorage.setItem("signbridge:lang", lang); }, [lang]);
 
   const onSpeak = async () => {
     if (!sentence) return;
