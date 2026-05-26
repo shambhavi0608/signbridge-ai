@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { AppCard as Card } from "@/components/ui/AppCard";
 import { AppButton as Button } from "@/components/ui/AppButton";
