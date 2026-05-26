@@ -55,7 +55,12 @@ function Toggle({ label, storageKey, defaultValue = false }: { label: string; st
 }
 
 function Select({ label, storageKey, options, defaultValue }: { label: string; storageKey: string; options: string[]; defaultValue: string }) {
-  const [v, setV] = useState<string>(() => localStorage.getItem(storageKey) ?? defaultValue);
+  const [v, setV] = useState<string>(defaultValue);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) setV(stored);
+  }, [storageKey]);
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="text-sm text-white/80">{label}</span>
