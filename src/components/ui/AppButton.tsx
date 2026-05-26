@@ -25,7 +25,7 @@ const sizes: Record<Size, string> = {
   lg: "h-12 px-6 text-base",
 };
 
-export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
+export const AppButton = forwardRef<HTMLButtonElement, Props>(function AppButton(
   { className, variant = "primary", size = "md", loading, disabled, children, ...rest }, ref,
 ) {
   return (

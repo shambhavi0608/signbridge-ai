@@ -15,7 +15,7 @@ const tones: Record<Tone, string> = {
   muted: "bg-white/5 text-white/60 border-white/10",
 };
 
-export function Badge({ className, tone = "default", ...rest }: Props) {
+export function AppBadge({ className, tone = "default", ...rest }: Props) {
   return (
     <span
       className={cn(

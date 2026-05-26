@@ -7,7 +7,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 
 const pad = { none: "", sm: "p-3", md: "p-5", lg: "p-6" };
 
-export const Card = forwardRef<HTMLDivElement, Props>(function Card(
+export const AppCard = forwardRef<HTMLDivElement, Props>(function AppCard(
   { className, padding = "md", ...rest }, ref,
 ) {
   return (
