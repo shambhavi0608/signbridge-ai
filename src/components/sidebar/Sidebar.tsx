@@ -3,7 +3,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity, History, Settings as SettingsIcon, Cpu, ChevronLeft, ChevronRight,
-  Play, LogOut, Hand,
+  Play, LogOut, Hand, Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppButton as Button } from "@/components/ui/AppButton";
@@ -11,6 +11,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 
 const links = [
   { to: "/dashboard", label: "Live Translator", icon: Activity, exact: true },
+  { to: "/dashboard/collect-data", label: "Collect Data", icon: Database, exact: false },
   { to: "/dashboard/history", label: "Translation History", icon: History, exact: false },
   { to: "/dashboard/settings", label: "Emotion Settings", icon: SettingsIcon, exact: false },
   { to: "/dashboard/system-status", label: "System Status", icon: Cpu, exact: false },
