@@ -15,6 +15,7 @@ import { useFirestoreHistory } from "@/hooks/useFirestoreHistory";
 import { speak } from "@/lib/speechSynthesis";
 import { Smile, Languages, Activity } from "lucide-react";
 import { toast } from "sonner";
+import { predictLandmarks } from "@/lib/translationApi";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
   ssr: false,
@@ -28,11 +29,76 @@ function LiveTranslator() {
   const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const status = useSystemStatus(state.active);
   const { add } = useFirestoreHistory();
+  const sequenceBufferRef = useRef<number[][]>([]);
+  const inFlightRef = useRef(false);
+  const lastGestureRef = useRef<string | null>(null);
+
+  const [confidence, setConfidence] = useState(0);
+
   const hands = useHandDetection({
     enabled: state.active,
     videoRef,
     canvasRef: overlayRef,
     maxNumHands: 2,
+    onResults: (r) => {
+      if (!state.active) return;
+      if (inFlightRef.current) return;
+      if (!r.hands || r.hands.length === 0) return;
+
+      // Build a stable 126-length feature vector per frame:
+      // - Prefer ordering by handedness labels when available
+      // - Each hand contributes 21 * 3 = 63 values (x,y,z)
+      const byLabel: Record<string, number[]> = {};
+      for (let i = 0; i < r.hands.length; i++) {
+        const label = r.handedness?.[i] ?? `hand${i}`;
+        const flat: number[] = [];
+        for (const p of r.hands[i] ?? []) flat.push(p.x, p.y, p.z);
+        byLabel[label] = flat;
+      }
+
+      const left = byLabel["Left"] ?? [];
+      const right = byLabel["Right"] ?? [];
+      let features: number[] = [];
+      if (left.length || right.length) {
+        features = [...left, ...right];
+      } else {
+        // fallback if handedness isn't present/consistent
+        const flat0: number[] = [];
+        for (const p of r.hands[0] ?? []) flat0.push(p.x, p.y, p.z);
+        const flat1: number[] = [];
+        for (const p of r.hands[1] ?? []) flat1.push(p.x, p.y, p.z);
+        features = [...flat0, ...flat1];
+      }
+
+      // Ensure exactly 126 values; backend also pads/truncates, but this keeps payload consistent.
+      if (features.length < 126) features = features.concat(Array(126 - features.length).fill(0));
+      if (features.length > 126) features = features.slice(0, 126);
+
+      sequenceBufferRef.current.push(features);
+      if (sequenceBufferRef.current.length < 30) return;
+
+      const sequenceBuffer = sequenceBufferRef.current.slice(0, 30);
+      sequenceBufferRef.current = [];
+
+      inFlightRef.current = true;
+      (async () => {
+        try {
+          const result = await predictLandmarks(sequenceBuffer);
+          setGesture(result.gesture);
+          setConfidence(Number.isFinite(result.confidence) ? result.confidence : 0);
+
+          if (result.gesture && result.gesture !== lastGestureRef.current) {
+            lastGestureRef.current = result.gesture;
+            setGestureCount((c) => c + 1);
+            setSentence((s) => (s.trim() ? `${s.trim()} ${result.gesture}` : result.gesture));
+          }
+        } catch {
+          // ignore transient network/model errors
+        } finally {
+          inFlightRef.current = false;
+        }
+      })();
+    },
   });
 
   const [sentence, setSentence] = useState("");
@@ -78,6 +144,9 @@ function LiveTranslator() {
 
   const onClear = () => {
     setSentence(""); setGesture(null); setEmotion(null);
+    setConfidence(0);
+    sequenceBufferRef.current = [];
+    lastGestureRef.current = null;
   };
 
   const time = useMemo(() => {
@@ -113,7 +182,11 @@ function LiveTranslator() {
           <GestureCard gesture={gesture} />
           <Card padding="md" className="space-y-4">
             <h3 className="text-sm font-semibold text-white">Confidence Signals</h3>
-            <ConfidenceMeter spatial={0} temporal={0} contextual={0} />
+            <ConfidenceMeter
+              spatial={confidence}
+              temporal={confidence * 0.95}
+              contextual={confidence * 0.9}
+            />
           </Card>
           <SentencePanel sentence={sentence} speaking={speaking} onSpeak={onSpeak} onClear={onClear} />
         </div>
@@ -170,7 +243,7 @@ function LiveTranslator() {
       </Card>
 
       {/* Hidden — silences unused setter warnings; these wire to real inference */}
-      <span className="hidden">{setGesture.length}{setEmotion.length}{setGestureCount.length}{setSentence.length}</span>
+      <span className="hidden">{setEmotion.length}</span>
     </div>
   );
 }

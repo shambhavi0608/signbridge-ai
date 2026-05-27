@@ -26,7 +26,7 @@ export function useSystemStatus(cameraActive: boolean): SystemStatus {
         ...s,
         backend: b.ok,
         backendLatencyMs: b.latencyMs,
-        model: b.ok, // model loads via backend
+        model: b.modelLoaded,
         firebase: f || firebaseStatus.connected,
       }));
     };
