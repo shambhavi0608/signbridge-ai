@@ -6,15 +6,17 @@ import type { RefObject } from "react";
 
 interface Props {
   videoRef: RefObject<HTMLVideoElement | null>;
+  overlayRef?: RefObject<HTMLCanvasElement | null>;
   active: boolean;
   fps: number;
   error: string | null;
   onStart: () => void;
   onStop: () => void;
   starting?: boolean;
+  handsDetected?: number;
 }
 
-export function WebcamFeed({ videoRef, active, fps, error, onStart, onStop, starting }: Props) {
+export function WebcamFeed({ videoRef, overlayRef, active, fps, error, onStart, onStop, starting, handsDetected = 0 }: Props) {
   return (
     <Card padding="md" className="space-y-4">
       <div className="flex items-center justify-between">
@@ -31,8 +33,19 @@ export function WebcamFeed({ videoRef, active, fps, error, onStart, onStop, star
         <video
           ref={videoRef}
           autoPlay playsInline muted
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover scale-x-[-1]"
         />
+        <canvas
+          ref={overlayRef}
+          className="absolute inset-0 h-full w-full pointer-events-none scale-x-[-1]"
+        />
+        {active && handsDetected > 0 && (
+          <div className="absolute top-3 right-3 rounded-full bg-[#F97316]/90 backdrop-blur px-2.5 py-1">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-white">
+              {handsDetected} {handsDetected === 1 ? "Hand" : "Hands"}
+            </span>
+          </div>
+        )}
         {!active && (
           <div className="absolute inset-0 grid place-items-center text-center px-4">
             <div className="space-y-2">
