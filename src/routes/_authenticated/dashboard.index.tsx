@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { WebcamFeed } from "@/components/camera/WebcamFeed";
 import { GestureCard } from "@/components/detection/GestureCard";
@@ -10,12 +10,14 @@ import { AppBadge as Badge } from "@/components/ui/AppBadge";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { useCamera } from "@/hooks/useCamera";
 import { useSystemStatus } from "@/hooks/useSystemStatus";
+import { useHandDetection } from "@/hooks/useHandDetection";
 import { useFirestoreHistory } from "@/hooks/useFirestoreHistory";
 import { speak } from "@/lib/speechSynthesis";
 import { Smile, Languages, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
+  ssr: false,
   component: LiveTranslator,
 });
 
@@ -23,8 +25,15 @@ type Lang = "en" | "hi" | "es";
 
 function LiveTranslator() {
   const { videoRef, state, start, stop } = useCamera();
+  const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const status = useSystemStatus(state.active);
   const { add } = useFirestoreHistory();
+  const hands = useHandDetection({
+    enabled: state.active,
+    videoRef,
+    canvasRef: overlayRef,
+    maxNumHands: 2,
+  });
 
   const [sentence, setSentence] = useState("");
   const [gesture, setGesture] = useState<string | null>(null);
@@ -93,8 +102,9 @@ function LiveTranslator() {
         {/* Left */}
         <div className="xl:col-span-4 space-y-6">
           <WebcamFeed
-            videoRef={videoRef} active={state.active} fps={state.fps}
+            videoRef={videoRef} overlayRef={overlayRef} active={state.active} fps={state.fps}
             error={state.error} onStart={start} onStop={stop}
+            handsDetected={hands.result.hands.length}
           />
         </div>
 
