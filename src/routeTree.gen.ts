@@ -19,6 +19,7 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedDashboardSystemStatusRouteImport } from './routes/_authenticated/dashboard.system-status'
 import { Route as AuthenticatedDashboardSettingsRouteImport } from './routes/_authenticated/dashboard.settings'
 import { Route as AuthenticatedDashboardHistoryRouteImport } from './routes/_authenticated/dashboard.history'
+import { Route as AuthenticatedDashboardCollectDataRouteImport } from './routes/_authenticated/dashboard.collect-data'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -73,6 +74,12 @@ const AuthenticatedDashboardHistoryRoute =
     path: '/history',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardCollectDataRoute =
+  AuthenticatedDashboardCollectDataRouteImport.update({
+    id: '/collect-data',
+    path: '/collect-data',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/dashboard/collect-data': typeof AuthenticatedDashboardCollectDataRoute
   '/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/system-status': typeof AuthenticatedDashboardSystemStatusRoute
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/dashboard/collect-data': typeof AuthenticatedDashboardCollectDataRoute
   '/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
   '/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/dashboard/system-status': typeof AuthenticatedDashboardSystemStatusRoute
@@ -103,6 +112,7 @@ export interface FileRoutesById {
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/_authenticated/dashboard/collect-data': typeof AuthenticatedDashboardCollectDataRoute
   '/_authenticated/dashboard/history': typeof AuthenticatedDashboardHistoryRoute
   '/_authenticated/dashboard/settings': typeof AuthenticatedDashboardSettingsRoute
   '/_authenticated/dashboard/system-status': typeof AuthenticatedDashboardSystemStatusRoute
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/signup'
+    | '/dashboard/collect-data'
     | '/dashboard/history'
     | '/dashboard/settings'
     | '/dashboard/system-status'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/signup'
+    | '/dashboard/collect-data'
     | '/dashboard/history'
     | '/dashboard/settings'
     | '/dashboard/system-status'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
     | '/auth/forgot-password'
     | '/auth/login'
     | '/auth/signup'
+    | '/_authenticated/dashboard/collect-data'
     | '/_authenticated/dashboard/history'
     | '/_authenticated/dashboard/settings'
     | '/_authenticated/dashboard/system-status'
@@ -224,10 +237,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardHistoryRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/collect-data': {
+      id: '/_authenticated/dashboard/collect-data'
+      path: '/collect-data'
+      fullPath: '/dashboard/collect-data'
+      preLoaderRoute: typeof AuthenticatedDashboardCollectDataRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
   }
 }
 
 interface AuthenticatedDashboardRouteChildren {
+  AuthenticatedDashboardCollectDataRoute: typeof AuthenticatedDashboardCollectDataRoute
   AuthenticatedDashboardHistoryRoute: typeof AuthenticatedDashboardHistoryRoute
   AuthenticatedDashboardSettingsRoute: typeof AuthenticatedDashboardSettingsRoute
   AuthenticatedDashboardSystemStatusRoute: typeof AuthenticatedDashboardSystemStatusRoute
@@ -236,6 +257,8 @@ interface AuthenticatedDashboardRouteChildren {
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
+    AuthenticatedDashboardCollectDataRoute:
+      AuthenticatedDashboardCollectDataRoute,
     AuthenticatedDashboardHistoryRoute: AuthenticatedDashboardHistoryRoute,
     AuthenticatedDashboardSettingsRoute: AuthenticatedDashboardSettingsRoute,
     AuthenticatedDashboardSystemStatusRoute:
@@ -270,3 +293,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
