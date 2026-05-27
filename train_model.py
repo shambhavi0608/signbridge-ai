@@ -8,7 +8,6 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLRO
 from tensorflow.keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-import tensorflowjs as tfjs
 
 print("Loading dataset...")
 with open("dataset/dataset.json") as f:
@@ -19,14 +18,26 @@ samples = data["samples"]
 print(f"Total samples: {len(samples)}")
 print(f"Total gestures: {len(GESTURES)}")
 
+FRAMES = 30
+LANDMARKS = 42
+FEATURES = LANDMARKS * 3
+
 X, y = [], []
 for s in samples:
-    landmarks = s["landmarks"]
-    flat = []
-    for frame in landmarks:
-        for point in frame:
-            flat.extend(point)
-    X.append(landmarks)
+    sequence = s["landmarks"]
+    fixed_seq = []
+    for frame in sequence:
+        frame = np.array(frame)
+        flat = frame.flatten()
+        if len(flat) < FEATURES:
+            flat = np.pad(flat, (0, FEATURES - len(flat)))
+        elif len(flat) > FEATURES:
+            flat = flat[:FEATURES]
+        fixed_seq.append(flat)
+    while len(fixed_seq) < FRAMES:
+        fixed_seq.append(np.zeros(FEATURES))
+    fixed_seq = fixed_seq[:FRAMES]
+    X.append(fixed_seq)
     y.append(s["gesture"])
 
 X = np.array(X, dtype=np.float32)
@@ -37,15 +48,14 @@ y_encoded = le.fit_transform(y)
 y_cat = tf.keras.utils.to_categorical(y_encoded, len(GESTURES))
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y_cat, test_size=0.2, random_state=42, stratify=y_encoded
+    X, y_cat,
+    test_size=0.2,
+    random_state=42,
+    stratify=y_encoded
 )
 
 print(f"Train: {len(X_train)} | Test: {len(X_test)}")
-
-input_shape = (X.shape[1], X.shape[2] * X.shape[3])
-X_train_flat = X_train.reshape(X_train.shape[0], X_train.shape[1], -1)
-X_test_flat = X_test.reshape(X_test.shape[0], X_test.shape[1], -1)
-
+input_shape = (FRAMES, FEATURES)
 print(f"Input shape: {input_shape}")
 
 model = Sequential([
@@ -75,6 +85,7 @@ model.compile(
 model.summary()
 
 os.makedirs("model", exist_ok=True)
+os.makedirs("public/model", exist_ok=True)
 
 callbacks = [
     EarlyStopping(
@@ -100,15 +111,15 @@ callbacks = [
 
 print("\nTraining started...")
 history = model.fit(
-    X_train_flat, y_train,
+    X_train, y_train,
     epochs=100,
-    batch_size=32,
-    validation_data=(X_test_flat, y_test),
+    batch_size=16,
+    validation_data=(X_test, y_test),
     callbacks=callbacks,
     verbose=1
 )
 
-loss, acc = model.evaluate(X_test_flat, y_test, verbose=0)
+loss, acc = model.evaluate(X_test, y_test, verbose=0)
 print(f"\nFinal Accuracy: {acc*100:.2f}%")
 
 model.save("model/signbridge_model.h5")
@@ -117,17 +128,25 @@ np.save("model/label_encoder.npy", le.classes_)
 with open("model/labels.json", "w") as f:
     json.dump(GESTURES, f)
 
-print("\nConverting to TensorFlow.js...")
-os.makedirs("public/model", exist_ok=True)
-tfjs.converters.save_keras_model(model, "public/model")
-
 with open("public/model/labels.json", "w") as f:
     json.dump(GESTURES, f)
+
+print("\nConverting to TFLite...")
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+tflite_model = converter.convert()
+
+with open("model/signbridge_model.tflite", "wb") as f:
+    f.write(tflite_model)
+
+with open("public/model/signbridge_model.tflite", "wb") as f:
+    f.write(tflite_model)
 
 print("\n✅ ALL DONE!")
 print(f"Accuracy: {acc*100:.2f}%")
 print("Files saved:")
 print("  model/signbridge_model.h5")
+print("  model/signbridge_model.tflite")
 print("  model/labels.json")
-print("  public/model/model.json")
+print("  public/model/signbridge_model.tflite")
 print("  public/model/labels.json")
