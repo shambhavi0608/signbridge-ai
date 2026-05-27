@@ -17,6 +17,7 @@ import { Smile, Languages, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/dashboard/")({
+  ssr: false,
   component: LiveTranslator,
 });
 
